@@ -1,8 +1,11 @@
 {
     "name": "cherry-rest",
-    "version": "1.0.0",
+    "repository":"https://github.com/daoxiaozhang/cherry-rest.git",
+    "version": "0.0.1",
     "description": "",
-    "main": "index.js",
+    "keywords":"rest,cherry,cherry rest",
+    "main": "dist/index.js",
+    "author":"daoxiaozhang",
     "scripts": {
         "pack": "webpack",
         "test": "jest"
