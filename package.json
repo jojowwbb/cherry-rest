@@ -1,14 +1,15 @@
 {
     "name": "cherry-rest",
     "repository":"https://github.com/daoxiaozhang/cherry-rest.git",
-    "version": "0.0.1",
+    "version": "0.0.3",
     "description": "",
     "keywords":"rest,cherry,cherry rest",
     "main": "dist/index.js",
     "author":"daoxiaozhang",
     "scripts": {
         "pack": "webpack",
-        "test": "jest"
+        "test": "jest",
+        "async": "jest ./test/async.test.js"
     },
     "jest": {
         "transform": {

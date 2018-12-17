@@ -1,45 +1,104 @@
+/**
+ * CherryRest
+ * 一个优雅的Rest接口访问器
+ * @version 0.0.1
+ * @author daoxiaozhang
+ */
+
 import "@babel/polyfill";
 
 const NULL_PATTERN = /^null | null$|^[^(]* null /i;
 const UNDEFINED_PATTERN = /^undefined | undefined$|^[^(]* undefined /i;
+
+//rest对象
+let Cherry = {};
+
 //fetch基础配置
 let fetchOption = {};
 
+//全局配置
 let commonOption={
     noFetch:false,
     baseUrl:'/',
+    //数据加载、默认使用fetch
     loader:function(options) {
         let { url, ...rest } = Object.assign({}, fetchOption, options);
         return fetch(url, rest);
     },
+    //全局response数据转换器
     formatter:function(response){
         return response
     }
 }
-//rest对象
-let Cherry = {};
+/**
+ * 默认模块配置
+ * @type {Object}
+ */
+let defaultModuleOptions={
+    formatter:[],
+    baseUrl:undefined
+}
 
-//优雅的取值
-export function need(props, callback, defaultValue) {
-    try {
-        return callback(props);
-    } catch (error) {
-        if (error instanceof TypeError) {
-            if (NULL_PATTERN.test(error)) {
-                return defaultValue || null;
-            } else if (UNDEFINED_PATTERN.test(error)) {
-                return defaultValue || undefined;
-            }
+
+function toBe(data,type){
+    return Object.prototype.toString.call(data) === '[object '+type+']'
+}
+
+const filterOptions={
+    over:function(source,opts=[]){
+        let result={};
+        let type=Object.prototype.toString.call(source);
+        let format=function(data){
+            let _temp={};
+            opts.map(item=>{
+                let [key,alias]=item.split('|');
+                let _key=alias||key;
+                _temp[_key]=data[key];
+            })
+            return _temp;
         }
-        throw error;
+        if( type=== '[object Object]'){
+            result=format(source);
+        }else if( type=== '[object Array]'){
+            result=source.map(data=>{
+                return format(data);
+            })
+        }
+        return result;
     }
 }
 
-//将path、qeuery参数转成url
-function format({
-    path = [],
-    query = {}
-}) {
+
+function log(){
+    console.log(arguments)
+}
+
+/**
+ * debounce创建方法
+ * @param  {Function} fun   需要执行的function
+ * @param  {Long} delay 延迟时间，单位：毫秒
+ * @return {Function}
+ */
+function debounceCreator(fun, delay) {
+    return function(args) {
+        //获取函数的作用域和变量
+        let that = this
+        let _args = args
+        //每次事件被触发，都会清除当前的timeer，然后重写设置超时调用
+        clearTimeout(fun.id)
+        fun.id = setTimeout(function() {
+            fun.call(that, _args)
+        }, delay)
+    }
+}
+
+/**
+ * 根据参数、格式化为URL字符串
+ * @param  {Array}  [path=[]] url path 默认类型为数组、可以是字符串、以逗号分割
+ * @param  {Object} [query={} }]            url query参数
+ * @return {String}           url
+ */
+function format({ path = [], query = {} }) {
     let url = '';
     let params = [];
     if (typeof path === 'string') {
@@ -61,8 +120,11 @@ function format({
     return url;
 }
 
-class Module {
 
+/**
+ * 模块  Class
+ */
+class Module {
     constructor(props, options) {
         this.$name = props.name;
         this.$parent = props.parent;
@@ -70,7 +132,10 @@ class Module {
         if (props.parent) {
             this.$options = Object.assign({}, props.parent.$options, props.options);
         } else {
-            this.$options = Object.assign({}, options, props.options);
+            this.$options = Object.assign({}, defaultModuleOptions, props.options);
+        }
+        if(this.$options.debounce){
+            this.$debouncer=debounceCreator(commonOption.loader,this.$options.debounce)
         }
     }
     getUrl(fetchParams){
@@ -98,13 +163,23 @@ class Module {
         if(commonOption.noFetch){
             return fetchOption;
         }else{
-            return commonOption.loader(fetchOption)
-                        .then(res=>{
-                            let formatter=this.$options.formatter||commonOption.formatter;
-                            return formatter(res);
-                        });
+            let _prms=this.$debouncer?his.$debouncer(fetchOption):commonOption.loader(fetchOption);
+            console.log(fetchOption)
+            return _prms.then(commonOption.formatter).then(res=>{
+                let formatterArrays=this.$options.formatter;
+                let filters=this.$options.filters;
+                let result=res;
+                formatterArrays.map(formatter=>{
+                    result=formatter(result);
+                })
+                if(toBe(filters,'Array')){
+                    filters.map(filter=>{
+                        result=filterOptions[filter.name](result,filter.options)
+                    })
+                }
+                return result;
+            });
         }
-
     }
     create(fetchParams) {
         let fetchOption = this.convertFetchOption(fetchParams, 'POST');
@@ -125,6 +200,12 @@ class Module {
     }
 }
 
+/**
+ * 通过字符串的形式实例化module对象
+ * @param  {[type]} name    字符串配置形式
+ * @param  {[type]} options 模块的配置
+ * @return {[type]}         [description]
+ */
 function createModuleByString(name, options) {
     let moduleNames = name.split(',');
     let moduleObj = [];
@@ -159,6 +240,29 @@ function createModule(modules, parentModule) {
     })
 }
 
+/**
+ * 一个优雅的取值形式
+ * @param  {Object}   props        需要取值的数据源
+ * @param  {Function} callback
+ * @param  {Object}   defaultValue 当取值异常、或者值为false时返回的默认值
+ * @return {Object}                返回值
+ */
+export function need(props, callback, defaultValue) {
+    try {
+        return callback(props);
+    } catch (error) {
+        if (error instanceof TypeError) {
+            if (NULL_PATTERN.test(error)) {
+                return defaultValue || null;
+            } else if (UNDEFINED_PATTERN.test(error)) {
+                return defaultValue || undefined;
+            }
+        }
+        throw error;
+    }
+}
+
+
 export function config(fetch,common) {
     fetchOption = fetch;
     commonOption=Object.assign({},commonOption,common);
@@ -170,4 +274,5 @@ export function module(modules, options) {
         createModule(modules);
     }
 }
+
 export default Cherry;

@@ -6,6 +6,10 @@ CherryModule('name',{
     baseUrl:'http://www.google.com'
 });
 
+CherryModule('goods',{
+    debounce:1000
+});
+
 CherryModule('module2|home,moudle3|user');
 CherryModule([{
     name:'module3',
