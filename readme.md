@@ -57,7 +57,7 @@ Cherry.module3.info.remove({path:'1,2'}).then(res=>res)
 //fetch delete /about/info/1/2;
 ```
 
-Demo
+Test
 
 ```js
 import Cherry,{module as CherryModule,config as CherryConfig} from '../dist/index.js'
@@ -90,4 +90,66 @@ it('async & filters test', () => {
     });
 });
 ```
+
+## Demo
+
+### Base
+
+```javascript
+//import
+import Cherry,{module,config} from 'cherry-rest'
+
+//基于rest业务接口定义模块
+//比如：
+//http://localhost:8080/api/v1/user 
+config({
+    common:{
+        formatter:function(res){
+            return res.json()
+        }
+    }
+})
+module([{
+    name:'api',
+    children:[{
+        name:'version',
+        alias:'v1',
+        children:[{
+            name:'user'
+        }]
+    }]
+}])
+
+//也可以这么定义
+config({
+    common:{
+        baseUrl:'/api/v1',
+        formatter:function(res){
+            return res.json()
+        }
+    }
+})
+module([{
+    name:'user'
+}])
+
+let Loader=Cherry.user;
+
+//调用
+let Loader=Cherry.api.version.user;
+
+Loader.create({body:{id:'001',name:'001'}}).then(res=>res);
+//POST /api/v1/user {id:'001',name:'001'}
+Loader.query({path:'001'}).then(res=>res);
+//GET /api/v1/user/001
+Loader.query({query:{name:'001'}}).then(res=>res);
+//GET /api/v1/user?name=001;
+Loader.update({path:'001',body:{name:'002'}}).then(res=>res);
+//PUT /api/v1/user/001 {name:'002'}
+
+```
+
+
+
+
 

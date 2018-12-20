@@ -9873,7 +9873,12 @@ function () {
     this.$alias = props.alias;
 
     if (props.parent) {
-      this.$options = Object.assign({}, props.parent.$options, props.options);
+      //只继承父模块的baseUrl配置
+      var _opts = Object.assign({}, defaultModuleOptions, {
+        baseUrl: props.parent.$options.baseUrl
+      });
+
+      this.$options = Object.assign({}, _opts, props.options);
     } else {
       this.$options = Object.assign({}, defaultModuleOptions, props.options);
     }
@@ -10041,14 +10046,22 @@ function need(props, callback, defaultValue) {
     throw error;
   }
 }
-function config(fetch, common) {
-  fetchOption = fetch;
-  commonOption = Object.assign({}, commonOption, common);
+function config() {
+  if (arguments.length == 2) {
+    fetchOption = arguments[0];
+    commonOption = Object.assign({}, commonOption, arguments[1]);
+  } else if (arguments.length == 1) {
+    var _arguments$ = arguments[0],
+        _fetch = _arguments$.fetch,
+        common = _arguments$.common;
+    fetchOption = _fetch;
+    commonOption = Object.assign({}, commonOption, common);
+  }
 }
 function module(modules, options) {
   if (typeof modules === 'string') {
     createModuleByString(modules, options);
-  } else if (Object.prototype.toString.call(modules) === '[object Array]') {
+  } else if (toBe(modules, 'Array')) {
     createModule(modules);
   }
 }

@@ -17,16 +17,19 @@ let Cherry = {};
 let fetchOption = {};
 
 //全局配置
-let commonOption={
-    noFetch:false,
-    baseUrl:'/',
+let commonOption = {
+    noFetch: false,
+    baseUrl: '/',
     //数据加载、默认使用fetch
-    loader:function(options) {
-        let { url, ...rest } = Object.assign({}, fetchOption, options);
+    loader: function (options) {
+        let {
+            url,
+            ...rest
+        } = Object.assign({}, fetchOption, options);
         return fetch(url, rest);
     },
     //全局response数据转换器
-    formatter:function(response){
+    formatter: function (response) {
         return response
     }
 }
@@ -34,33 +37,33 @@ let commonOption={
  * 默认模块配置
  * @type {Object}
  */
-let defaultModuleOptions={
-    formatter:[],
-    baseUrl:undefined
+let defaultModuleOptions = {
+    formatter: [],
+    baseUrl: undefined
 }
 
 
-function toBe(data,type){
-    return Object.prototype.toString.call(data) === '[object '+type+']'
+function toBe(data, type) {
+    return Object.prototype.toString.call(data) === '[object ' + type + ']'
 }
 
-const filterOptions={
-    over:function(source,opts=[]){
-        let result={};
-        let type=Object.prototype.toString.call(source);
-        let format=function(data){
-            let _temp={};
-            opts.map(item=>{
-                let [key,alias]=item.split('|');
-                let _key=alias||key;
-                _temp[_key]=data[key];
+const filterOptions = {
+    over: function (source, opts = []) {
+        let result = {};
+        let type = Object.prototype.toString.call(source);
+        let format = function (data) {
+            let _temp = {};
+            opts.map(item => {
+                let [key, alias] = item.split('|');
+                let _key = alias || key;
+                _temp[_key] = data[key];
             })
             return _temp;
         }
-        if( type=== '[object Object]'){
-            result=format(source);
-        }else if( type=== '[object Array]'){
-            result=source.map(data=>{
+        if (type === '[object Object]') {
+            result = format(source);
+        } else if (type === '[object Array]') {
+            result = source.map(data => {
                 return format(data);
             })
         }
@@ -69,7 +72,7 @@ const filterOptions={
 }
 
 
-function log(){
+function log() {
     console.log(arguments)
 }
 
@@ -80,13 +83,13 @@ function log(){
  * @return {Function}
  */
 function debounceCreator(fun, delay) {
-    return function(args) {
+    return function (args) {
         //获取函数的作用域和变量
         let that = this
         let _args = args
         //每次事件被触发，都会清除当前的timeer，然后重写设置超时调用
         clearTimeout(fun.id)
-        fun.id = setTimeout(function() {
+        fun.id = setTimeout(function () {
             fun.call(that, _args)
         }, delay)
     }
@@ -98,7 +101,10 @@ function debounceCreator(fun, delay) {
  * @param  {Object} [query={} }]            url query参数
  * @return {String}           url
  */
-function format({ path = [], query = {} }) {
+function format({
+    path = [],
+    query = {}
+}) {
     let url = '';
     let params = [];
     if (typeof path === 'string') {
@@ -130,17 +136,21 @@ class Module {
         this.$parent = props.parent;
         this.$alias = props.alias;
         if (props.parent) {
-            this.$options = Object.assign({}, props.parent.$options, props.options);
+            //只继承父模块的baseUrl配置
+            let _opts = Object.assign({}, defaultModuleOptions, {
+                baseUrl: props.parent.$options.baseUrl
+            });
+            this.$options = Object.assign({}, _opts, props.options);
         } else {
             this.$options = Object.assign({}, defaultModuleOptions, props.options);
         }
-        if(this.$options.debounce){
-            this.$debouncer=debounceCreator(commonOption.loader,this.$options.debounce)
+        if (this.$options.debounce) {
+            this.$debouncer = debounceCreator(commonOption.loader, this.$options.debounce)
         }
     }
-    getUrl(fetchParams){
+    getUrl(fetchParams) {
         let result = [];
-        let _url='';
+        let _url = '';
         const loop = (module) => {
             result.push(module.$alias || module.$name);
             if (module.$parent) {
@@ -149,8 +159,8 @@ class Module {
         }
         loop(this);
         result.push('');
-        _url=result.reverse().join('/') + format(fetchParams);
-        return (this.$options.baseUrl||commonOption.baseUrl)+_url;
+        _url = result.reverse().join('/') + format(fetchParams);
+        return (this.$options.baseUrl || commonOption.baseUrl) + _url;
     }
     convertFetchOption(fetchParams = {}, method) {
         return {
@@ -159,22 +169,22 @@ class Module {
             method: method
         }
     }
-    _load(fetchOption){
-        if(commonOption.noFetch){
+    _load(fetchOption) {
+        if (commonOption.noFetch) {
             return fetchOption;
-        }else{
-            let _prms=this.$debouncer?his.$debouncer(fetchOption):commonOption.loader(fetchOption);
+        } else {
+            let _prms = this.$debouncer ? his.$debouncer(fetchOption) : commonOption.loader(fetchOption);
             console.log(fetchOption)
-            return _prms.then(commonOption.formatter).then(res=>{
-                let formatterArrays=this.$options.formatter;
-                let filters=this.$options.filters;
-                let result=res;
-                formatterArrays.map(formatter=>{
-                    result=formatter(result);
+            return _prms.then(commonOption.formatter).then(res => {
+                let formatterArrays = this.$options.formatter;
+                let filters = this.$options.filters;
+                let result = res;
+                formatterArrays.map(formatter => {
+                    result = formatter(result);
                 })
-                if(toBe(filters,'Array')){
-                    filters.map(filter=>{
-                        result=filterOptions[filter.name](result,filter.options)
+                if (toBe(filters, 'Array')) {
+                    filters.map(filter => {
+                        result = filterOptions[filter.name](result, filter.options)
                     })
                 }
                 return result;
@@ -240,6 +250,7 @@ function createModule(modules, parentModule) {
     })
 }
 
+
 /**
  * 一个优雅的取值形式
  * @param  {Object}   props        需要取值的数据源
@@ -263,14 +274,22 @@ export function need(props, callback, defaultValue) {
 }
 
 
-export function config(fetch,common) {
-    fetchOption = fetch;
-    commonOption=Object.assign({},commonOption,common);
+export function config() {
+    if(arguments.length==2){
+        fetchOption = arguments[0];
+        commonOption = Object.assign({}, commonOption, arguments[1]);
+    }else if(arguments.length==1){
+        let {fetch,common}=arguments[0];
+        fetchOption = fetch;
+        commonOption = Object.assign({}, commonOption, common);
+    }
+    
 }
+
 export function module(modules, options) {
     if (typeof modules === 'string') {
         createModuleByString(modules, options)
-    } else if (Object.prototype.toString.call(modules) === '[object Array]') {
+    } else if (toBe(modules,'Array')) {
         createModule(modules);
     }
 }
