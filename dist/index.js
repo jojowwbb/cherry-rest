@@ -9742,11 +9742,13 @@ var commonOption = {
         url = _Object$assign.url,
         rest = _objectWithoutProperties(_Object$assign, ["url"]);
 
-    return fetch(url, rest);
+    return fetch(url, rest).then(function (res) {
+      return res.json();
+    });
   },
   //全局response数据转换器
-  formatter: function formatter(response) {
-    return response;
+  formatter: function formatter(result) {
+    return result;
   }
   /**
    * 默认模块配置
@@ -9923,12 +9925,13 @@ function () {
     value: function _load(fetchOption) {
       var _this = this;
 
+      var fetchParams = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+
       if (commonOption.noFetch) {
         return fetchOption;
       } else {
         var _prms = this.$debouncer ? his.$debouncer(fetchOption) : commonOption.loader(fetchOption);
 
-        console.log(fetchOption);
         return _prms.then(commonOption.formatter).then(function (res) {
           var formatterArrays = _this.$options.formatter;
           var filters = _this.$options.filters;
@@ -9951,25 +9954,25 @@ function () {
     key: "create",
     value: function create(fetchParams) {
       var fetchOption = this.convertFetchOption(fetchParams, 'POST');
-      return this._load(fetchOption);
+      return this._load(fetchOption, fetchParams);
     }
   }, {
     key: "update",
     value: function update(fetchParams) {
       var fetchOption = this.convertFetchOption(fetchParams, 'PUT');
-      return this._load(fetchOption);
+      return this._load(fetchOption, fetchParams);
     }
   }, {
     key: "remove",
     value: function remove(fetchParams) {
       var fetchOption = this.convertFetchOption(fetchParams, 'DELETE');
-      return this._load(fetchOption);
+      return this._load(fetchOption, fetchParams);
     }
   }, {
     key: "query",
     value: function query(fetchParams) {
       var fetchOption = this.convertFetchOption(fetchParams, 'GET');
-      return this._load(fetchOption);
+      return this._load(fetchOption, fetchParams);
     }
   }]);
 
@@ -10046,6 +10049,10 @@ function need(props, callback, defaultValue) {
     throw error;
   }
 }
+/**
+ * 基础配置
+ */
+
 function config() {
   if (arguments.length == 2) {
     fetchOption = arguments[0];

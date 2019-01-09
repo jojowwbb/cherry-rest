@@ -6,10 +6,7 @@ jest.setTimeout(1200000);
 CherryConfig({
     credentials:'include'
 },{
-    baseUrl:'http://ip.taobao.com',
-    formatter:function(res){
-        return res.json()
-    }
+    baseUrl:'http://ip.taobao.com'
 })
 
 CherryModule('ip|service',{

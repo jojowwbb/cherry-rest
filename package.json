@@ -1,9 +1,13 @@
 {
     "name": "cherry-rest",
     "repository":"https://github.com/daoxiaozhang/cherry-rest.git",
-    "version": "0.0.3",
+    "version": "0.0.4",
     "description": "",
-    "keywords":"rest,cherry,cherry rest",
+    "keywords":[
+        "rest",
+        "cherry",
+        "cherry rest"
+    ],
     "main": "dist/index.js",
     "author":"daoxiaozhang",
     "scripts": {
@@ -19,7 +23,6 @@
     "resolutions": {
         "babel-core": "7.0.0-bridge.0"
     },
-    "author": "",
     "license": "ISC",
     "devDependencies": {
         "@babel/cli": "^7.2.0",

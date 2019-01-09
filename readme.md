@@ -95,57 +95,70 @@ it('async & filters test', () => {
 
 ### Base
 
+API Example:
+
+get http://www.baidu.com/mock/v1/user
+
+get http://www.baidu.com/mock/v1/user?id=${userId}
+
+get http://www.baidu.com/mock/v1/user/${userId}/blogs
+
+get http://www.baidu.com/mock/v1/books
+
+post http://www.baidu.com/mock/v1/user {name:'hello'}
+
+put http://www.baidu.com/mock/v1/user/{userId} {name:'world'}
+
 ```javascript
 //import
-import Cherry,{module,config} from 'cherry-rest'
+import Cherry,{module as CherryModule,config as CherryConfig} from 'cherry-rest'
 
 //基于rest业务接口定义模块
-//比如：
-//http://localhost:8080/api/v1/user 
-config({
+//配置baseUrl
+CherryConfig({
+    //默认使用fetch请求数据、这里可以配置fetch
+    fetch:{},
     common:{
-        formatter:function(res){
-            return res.json()
-        }
+        baseUrl:'http://www.baidu.com'
     }
 })
-module([{
-    name:'api',
+
+//定义模块
+CherryModule([{
+    name:'app',
+    alias:'mock',
     children:[{
         name:'version',
         alias:'v1',
         children:[{
             name:'user'
+        },{
+            name:'books'
         }]
     }]
 }])
 
-//也可以这么定义
-config({
-    common:{
-        baseUrl:'/api/v1',
-        formatter:function(res){
-            return res.json()
-        }
-    }
-})
-module([{
-    name:'user'
-}])
+let User=Cherry.app.version.user;
+let Book=Cherry.app.version.app;
 
-let Loader=Cherry.user;
+//GET http://www.baidu.com/mock/v1/user
+User.query()
 
-//调用
-let Loader=Cherry.api.version.user;
+//GET http://www.baidu.com/mock/v1/user?id=123
+User.query({query:{id:'123'}})
 
-Loader.create({body:{id:'001',name:'001'}}).then(res=>res);
-//POST /api/v1/user {id:'001',name:'001'}
-Loader.query({path:'001'}).then(res=>res);
-//GET /api/v1/user/001
-Loader.query({query:{name:'001'}}).then(res=>res);
-//GET /api/v1/user?name=001;
-Loader.update({path:'001',body:{name:'002'}}).then(res=>res);
-//PUT /api/v1/user/001 {name:'002'}
+//POST http://www.baidu.com/mock/v1/user {name:'hello'}
+User.create({body:{name:'hello'}})
+
+//PUT http://www.baidu.com/mock/v1/user/123 {name:'world'}
+User.update({path:'123',body:{name:'world'}})
+
+//GET http://www.baidu.com/mock/v1/user/${userId}/blogs
+User.query({path:['123','blogs'])
+
+//DELETE http://www.baidu.com/mock/v1/user/123
+User.remove({path:'123')
+
 
 ```
 

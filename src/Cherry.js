@@ -26,11 +26,11 @@ let commonOption = {
             url,
             ...rest
         } = Object.assign({}, fetchOption, options);
-        return fetch(url, rest);
+        return fetch(url, rest).then(res=>res.json());
     },
     //全局response数据转换器
-    formatter: function (response) {
-        return response
+    formatter: function (result) {
+        return result
     }
 }
 /**
@@ -125,8 +125,6 @@ function format({
     }
     return url;
 }
-
-
 /**
  * 模块  Class
  */
@@ -169,12 +167,11 @@ class Module {
             method: method
         }
     }
-    _load(fetchOption) {
+    _load(fetchOption,fetchParams={}) {
         if (commonOption.noFetch) {
             return fetchOption;
         } else {
             let _prms = this.$debouncer ? his.$debouncer(fetchOption) : commonOption.loader(fetchOption);
-            console.log(fetchOption)
             return _prms.then(commonOption.formatter).then(res => {
                 let formatterArrays = this.$options.formatter;
                 let filters = this.$options.filters;
@@ -193,20 +190,20 @@ class Module {
     }
     create(fetchParams) {
         let fetchOption = this.convertFetchOption(fetchParams, 'POST');
-        return this._load(fetchOption);
+        return this._load(fetchOption,fetchParams);
     }
     update(fetchParams) {
         let fetchOption = this.convertFetchOption(fetchParams, 'PUT');
-        return this._load(fetchOption);
+        return this._load(fetchOption,fetchParams);
 
     }
     remove(fetchParams) {
         let fetchOption = this.convertFetchOption(fetchParams, 'DELETE');
-        return this._load(fetchOption);
+        return this._load(fetchOption,fetchParams);
     }
     query(fetchParams) {
         let fetchOption = this.convertFetchOption(fetchParams, 'GET');
-        return this._load(fetchOption);
+        return this._load(fetchOption,fetchParams);
     }
 }
 
@@ -273,7 +270,9 @@ export function need(props, callback, defaultValue) {
     }
 }
 
-
+/**
+ * 基础配置
+ */
 export function config() {
     if(arguments.length==2){
         fetchOption = arguments[0];
@@ -283,7 +282,7 @@ export function config() {
         fetchOption = fetch;
         commonOption = Object.assign({}, commonOption, common);
     }
-    
+
 }
 
 export function module(modules, options) {
